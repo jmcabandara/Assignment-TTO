@@ -86,4 +86,39 @@ compress_files
 sleep 1
 echo "### Backup is successfully completed ... ================================================ ###"
 echo
+echo "---------------------------------------------------------------------------------------------"
+echo "				Upload Backup - Ubuntu 20.04.1 LTS											   "
+echo "---------------------------------------------------------------------------------------------"
+echo
+echo -e "You are going to Upload Backup to s3 Busket !!!"
+echo
 
+backupFile=$dateTime.tar.bz2
+backupPath="/backup/$dateTime"
+backup="/backup/$backupFile"
+
+s3Bucket="s3:us-east-2:655308211718:accesspoint/nginx-web-server-backup"
+
+# FUNCTIONS #######################################################################################
+
+upload_to_s3()
+{
+if [ $? -ne 0 ] ; then
+else
+	s3cmd put -r $backup $s3Bucket/
+	rm -rf $backup
+fi
+}
+
+# END OF FUNCTIONS ################################################################################
+
+touch $LogFile
+echo "BEGIN SCRIPT INFO" >> $LogFile
+echo
+echo "Date:	$DATE" >> $LogFile
+echo "User:	$USERS" >> $LogFile
+
+upload_to_s3
+
+echo "### Backup uploading is successfully completed ... ====================================== ###"
+echo

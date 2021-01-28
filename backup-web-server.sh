@@ -72,17 +72,23 @@ log_echo()
 
 collect_content()
 {
+LOG=$LOGS/collect_content.log
+echo "$logUser" >> $LOG
 cp -r $logPath $backupPath  1>> $LOG 2>&1
 cp $configPath $backupPath  1>> $LOG 2>&1
 }
 
 collect_logs()
 {
+LOG=$LOGS/collect_logs.log
+echo "$logUser" >> $LOG
 cp -r $errorLog $backupLog  1>> $LOG 2>&1
 }
 
 compress_files()
 {
+LOG=$LOGS/compress_files.log
+echo "$logUser" >> $LOG
 log_echo ""
 echo "### Compressing all files... ============================================================= ###"
 log_echo ""
@@ -141,6 +147,7 @@ s3Bucket="s3:us-east-2:655308211718:accesspoint/nginx-web-server-backup"
 upload_to_s3()
 {
 if [ $? -ne 0 ] ; then
+echo "if then >"
 else
 	s3cmd put -r $backup $s3Bucket/  1>> $LOG 2>&1
 	rm -rf $backup  1>> $LOG 2>&1
@@ -149,12 +156,9 @@ fi
 
 # END OF FUNCTIONS ################################################################################
 
-log_echo ""
-log_echo "### BEGIN SCRIPT ======================================================================== ###"
-log_echo ""
 if [ "$UPLOAD_TO_S3" = "0" ]; then
 	upload_to_s3
 fi
 log_echo ""
-log_echo "### You may find the logs at: $LOGS ..................................................... ###"
+log_echo "### You may find the logs at: $LOGS ................................................. ###"
 log_echo ""

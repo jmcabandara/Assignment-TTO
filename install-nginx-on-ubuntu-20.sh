@@ -27,11 +27,7 @@ dateTimeFull=$(date +%Y%m%d-%H%M%S)
 dateTime=$(date +%Y%m%d-%H%M)
 
 ################################################################
-COLLECT_CONTENT=0
-COLLECT_LOGS=0
-COMPRESS_FILES=0
-
-UPLOAD_TO_S3=0
+install_nginx=0
 
 LOGS=/tmp/instnginxlogs
 LOG=$LOGS/default.log
@@ -69,37 +65,33 @@ install_nginx()
 {
 LOG=$LOGS/install_nginx.log
 echo "$logUser" >> $LOG
-	# 01. If Nginx is running, collect user input before continue installing Nginx
-	log_echo ""
-	log_echo "### Check if the Nginx already installed or runing... =============================== ###"
-
-	# 02. Update the server
-	log_echo ""
-	log_echo "==================== Update the server ==================================================="
-	log_echo ""
-	sleep 1
-	sudo apt-get update 1>> $LOG 2>&1
-
-	# 03. Install Nginx
+	# Install Nginx
 	log_echo ""
 	log_echo "### Check if the Nginx already installed... ============================================ ###"
+	log_echo ""
 	sleep 1
 	
 	PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $package|grep "already installed")
-	
+	log_echo ""
 	if [ "" = "$PKG_OK" ]
 	then
+		sudo apt-get update 1>> $LOG 2>&1
+		log_echo ""
 		log_echo "No $package. Setting up $package."
+		log_echo ""
 		sudo apt-get --yes install $package 1>> $LOG 2>&1
+		log_echo ""
 	else
+		log_echo ""
 		log_echo "### $package: $PKG_OK... ======================================================== ###"
+		log_echo ""
 	fi
 
-	# 04. Finally, Start Nginx
+	# Finally, Start Nginx
 	log_echo ""
-	log_echo "### Check if the Nginx already runing... ============================================ ###"
-	
-	if [ $(systemctl is-active sshd) = active ]
+	log_echo "### Check if the Nginx status... ==================================================== ###"
+	log_echo ""
+	if [ $(systemctl is-active nginx) = active ]
 	then
 		log_echo ""
 		log_echo "### Nginx already runing... ===================================================== ###"
@@ -126,6 +118,7 @@ echo "$logUser" >> $LOG
 
 	log_echo ""
 	log_echo "### Installing Nginx is completed... ================================================ ###"
+	log_echo ""
 }
 
 # END OF FUNCTIONS ################################################################################
@@ -149,7 +142,9 @@ read -e answer
 
 # Check the user feedback and execute the dicition accordingly
 if [ "$answer" == n ] ; then
-exit
+	exit
 else
-install_nginx
+	if [ "$INSTALL_NGINX" = "0" ]; then
+		install_nginx
+	fi
 fi

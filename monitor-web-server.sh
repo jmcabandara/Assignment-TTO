@@ -13,15 +13,10 @@
 # - Execute with root privileges
 ### BEGIN SCRIPT INFO
 #
-# Define variables for log module
-
-logFileName="monitor-web-server.log"
-logFile="/tmp/$logFileName"
-
-echo
-echo "### BEGIN SCRIPT ======================================================================== ###" >> $logFile
-echo
 # Define variables
+logDate="Date: $(date)"
+logUser="User: $(users)"
+
 taskName=""
 package='nginx'
 
@@ -34,16 +29,47 @@ websiteIP="51.15.146.27"
 email="jmcabandara@gmail.com"	# Send mail in case of failure to.
 tmpDir=$workingDir/cache	# Temporary dir
 
+################################################################
+CHECK_WEB_SERVER=0
+
+LOGS=/tmp/monlogs
+
+if [ ! -d $LOGS ]; then
+	mkdir $LOGS
+fi
+
+LOG=$LOGS/default.log
+
 # FUNCTIONS #######################################################################################
+
+##########################
+#Logs and runs a command
+##########################
+log_run()
+{
+	COMMAND=$1
+	echo $COMMAND >> $LOG
+	$COMMAND 1>> $LOG 2>&1
+}
+
+##########################
+#Echoes and logs a message
+##########################
+log_echo()
+{
+	echo $1
+	echo $1 >> $LOG
+}
 
 check_web_server()
 {
-	echo "### Checking the web server status... =============================================== ###"
-	echo
-	if [ $(systemctl is-active $package) = active ]
+LOG=$LOGS/check_web_server.log
+log_echo "### Checking the web server status... =============================================== ###"
+echo
+if [ $(systemctl is-active $package) = active ]
 	then
 		echo
-		echo "### Nginx already runing... ===================================================== ###"
+		log_echo "### Nginx already runing... ===================================================== ###"
 		echo
 		#sudo ps -aux | grep $package
 		echo
@@ -53,7 +79,7 @@ check_web_server()
 		echo
 		exit 1
 	else
-		echo "### Nginx is dead... ============================================================ ###"
+		log_echo "### Nginx is dead... ============================================================ ###"
 		echo
 		sudo systemctl enable $package
 		echo
@@ -61,7 +87,7 @@ check_web_server()
 		echo
 			if [ $(systemctl is-active $package) = active ]
 			then
-				echo "### Nginx is started... ================================================= ###"
+				log_echo "### Nginx is started... ================================================= ###"
 			fi
 		echo
 		sudo systemctl status $package
@@ -116,26 +142,14 @@ echo > $tmpDir/$filename
 }
 
 # END OF FUNCTIONS ################################################################################
-
-touch $logFile
-echo "BEGIN SCRIPT INFO" >> $logFile
 echo
-echo -e "Date: $(date)" >> $logFile
-echo -e "User: $(users)" >> $logFile
-echo -e "" >> $logFile
+log_echo "### BEGIN SCRIPT ======================================================================== ###"
 echo
-
-
-check_web_server 2 >> $logFile
-
-	if [ $? -neq 0 ]
-	then
-
-	echo "Can't create a folder"
-		
-	exit
-		
-	fi
-
+if [ "$CHECK_WEB_SERVER" = "0" ]; then
+	check_web_server
+fi
+echo
 monitor_website $p 2
-
+echo
+log_echo "### You may find the logs at: $LOGS ..................................................... ###"
+echo

@@ -36,6 +36,8 @@ LOGS=/tmp/monlogs
 
 if [ ! -d $LOGS ]; then
 	mkdir $LOGS
+else
+	rm -rf $LOGS/*.*
 fi
 
 LOG=$LOGS/default.log
@@ -57,6 +59,8 @@ log_run()
 ##########################
 log_echo()
 {
+	echo "" >> $LOG
+	echo $(date) >> $LOG
 	echo $1
 	echo $1 >> $LOG
 }
@@ -64,43 +68,44 @@ log_echo()
 check_web_server()
 {
 LOG=$LOGS/check_web_server.log
-log_echo "### Checking the web server status... =============================================== ###"
-echo
+log_echo $logUser
+log_echo "### Checking the web server status... =================================================== ###"
+log_echo ""
 if [ $(systemctl is-active $package) = active ]
 	then
-		echo
+		log_echo ""
 		log_echo "### Nginx already runing... ===================================================== ###"
-		echo
+		log_echo ""
 		#sudo ps -aux | grep $package
-		echo
+		log_echo ""
 		#sudo netstat -ntlap | grep $package
-		echo
-		sudo systemctl status $package
-		echo
-		exit 1
+		log_echo ""
+		sudo systemctl status $package 1>> $LOG 2>&1
+		log_echo ""
 	else
 		log_echo "### Nginx is dead... ============================================================ ###"
-		echo
-		sudo systemctl enable $package
-		echo
-		sudo systemctl start $package
-		echo
+		log_echo ""
+		# sudo systemctl enable $package
+		log_echo ""
+		sudo systemctl start $package 1>> $LOG 2>&1
+		log_echo ""
 			if [ $(systemctl is-active $package) = active ]
 			then
 				log_echo "### Nginx is started... ================================================= ###"
 			fi
-		echo
+		log_echo ""
 		sudo systemctl status $package
-		echo
+		log_echo ""
 		#sudo ps -aux | grep $package
-		echo
-		#sudo netstat -ntlap | grep $package
+		log_echo ""
+		sudo netstat -ntlap | grep $package  1>> $LOG 2>&1
 	fi
-	echo
+	log_echo ""
 }
 
 monitor_website()
 {
+QUIET="false"
   response=$(curl -L --write-out %{http_code} --silent --output /dev/null $1)
   filename=$( echo $1 | cut -f1 -d"/" )
 	if [ "$QUIET" = false ] ; then 
@@ -115,7 +120,7 @@ monitor_website()
 		fi
 		# remove .temp file if exist 
 		if [ -f $tmpDir/$filename ]; then 
-			rm -f $tmpDir/$filename
+			rm -f $tmpDir/$filename 1>> $LOG 2>&1
 		fi
 	else
 	# website down
@@ -138,18 +143,18 @@ while read e; do
 	#mail -s "$p WEBSITE DOWN" "$EMAIL"
 done < $email
 
-echo > $tmpDir/$filename
+echo "" > $tmpDir/$filename
 }
 
 # END OF FUNCTIONS ################################################################################
-echo
+log_echo ""
 log_echo "### BEGIN SCRIPT ======================================================================== ###"
-echo
+log_echo ""
 if [ "$CHECK_WEB_SERVER" = "0" ]; then
 	check_web_server
 fi
-echo
-monitor_website $p 2
-echo
+log_echo ""
+monitor_website $p 1
+log_echo ""
 log_echo "### You may find the logs at: $LOGS ..................................................... ###"
-echo
+log_echo ""

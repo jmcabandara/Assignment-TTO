@@ -12,19 +12,10 @@
 # -Nothing
 #
 ### BEGIN SCRIPT INFO
-log_echo ""
-clear
-log_echo ""
-echo "---------------------------------------------------------------------------------------------"
-echo "			  Backing up Web Server - Ubuntu 20.04.1 LTS								       "
-echo "---------------------------------------------------------------------------------------------"
-log_echo ""
-echo -e "You are going to Backing up Web Server !!!"
-log_echo ""
 #
 # Define variables
 logDate="Date: $(date)"
-logUser="User: $(user)"
+logUser="User: $(users)"
 
 project="assignment"
 taskName="backing-up-$project"
@@ -41,17 +32,20 @@ configPath="/etc/nginx/nginx.conf"
 logPath="/var/log/nginx"
 
 ################################################################
+COLLECT_CONTENT=0
+COLLECT_LOGS=0
+COMPRESS_FILES=0
+
 UPLOAD_TO_S3=0
 
 LOGS=/tmp/bkplogs
+LOG=$LOGS/default.log
 
 if [ ! -d $LOGS ]; then
 	mkdir $LOGS
 else
 	rm -rf $LOGS/*.*
 fi
-
-LOG=$LOGS/default.log
 
 # FUNCTIONS #######################################################################################
 
@@ -96,6 +90,15 @@ tar -cvjf $backup /backup/$backupPath  1>> $LOG 2>&1
 }
 # END OF FUNCTIONS ################################################################################
 
+log_echo ""
+clear
+log_echo ""
+echo "---------------------------------------------------------------------------------------------"
+echo "			  Backing up Web Server - Ubuntu 20.04.1 LTS								       "
+echo "---------------------------------------------------------------------------------------------"
+log_echo ""
+echo -e "You are going to Backing up Web Server !!!"
+log_echo ""
 
 if [ ! -d $backupPath ] ; then
 		sudo mkdir -p $backupPath  1>> $LOG 2>&1
@@ -105,15 +108,20 @@ log_echo ""
 echo "### Creating backing up directories ===================================================== ###"
 log_echo ""
 
-collect_content
-
-collect_logs
-
-compress_files
+if [ "$COLLECT_CONTENT" = "0" ]; then
+	collect_content
+fi
+if [ "$COLLECT_LOGS" = "0" ]; then
+	collect_logs
+fi
+if [ "$COMPRESS_FILES" = "0" ]; then
+	compress_files
+fi
 
 sleep 1
 echo "### Backup is successfully completed ... ================================================ ###"
 ###################################################################################################
+
 log_echo ""
 echo "---------------------------------------------------------------------------------------------"
 echo "				Upload Backup - Ubuntu 20.04.1 LTS											   "

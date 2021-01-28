@@ -1,4 +1,3 @@
-
 #!/bin/bash -e
 #
 # Copyright 2014-2018 Chaminda Aruna Bandara J. M
@@ -13,19 +12,27 @@
 # - Makesure internet availability
 # - Execute with root privileges
 ### BEGIN SCRIPT INFO
+#
+# Define variables for log module
+
+logFileName="monitor-web-server.log"
+logFile="/tmp/$logFileName"
+
 echo
-echo "### BEGIN SCRIPT ======================================================================== ###"
+echo "### BEGIN SCRIPT ======================================================================== ###" >> $logFile
 echo
 # Define variables
-taskName='check-web-server'
+taskName=""
 package='nginx'
-
-logFileName="$taskName.log"
-logFile="/tmp/$logFileName"
 
 dateTimeFull=$(date +%Y%m%d-%H%M%S)
 dateTime=$(date +%Y%m%d-%H%M)
 
+workingDir=$(pwd .)
+websiteDomain=""
+websiteIP="51.15.146.27"
+email="jmcabandara@gmail.com"	# Send mail in case of failure to.
+tmpDir=$workingDir/cache	# Temporary dir
 
 # FUNCTIONS #######################################################################################
 
@@ -65,26 +72,6 @@ check_web_server()
 	fi
 	echo
 }
-
-# END OF FUNCTIONS ################################################################################
-
-touch $logFile
-echo "BEGIN SCRIPT INFO" >> $logFile
-echo
-echo -e "Date:	$(date)" >> $logFile
-echo -e "User:	$(users)" >> $logFile
-echo -e "" >> $logFile
-echo
-
-check_web_server
-
-
-workingDir=$(pwd .)
-website='ec2-18-216-93-105.us-east-2.compute.amazonaws.com'
-email='jmcabandara@gmail.com'	# Send mail in case of failure to.
-tmpDir=$workingDir/cache	# Temporary dir
-
-# FUNCTIONS #######################################################################################
 
 monitor_website()
 {
@@ -126,7 +113,6 @@ while read e; do
 done < $email
 
 echo > $tmpDir/$filename
-
 }
 
 # END OF FUNCTIONS ################################################################################
@@ -139,5 +125,17 @@ echo -e "User: $(users)" >> $logFile
 echo -e "" >> $logFile
 echo
 
-monitor_website $p
+
+check_web_server 2 >> $logFile
+
+	if [ $? -neq 0 ]
+	then
+
+	echo "Can't create a folder"
+		
+	exit
+		
+	fi
+
+monitor_website $p 2
 
